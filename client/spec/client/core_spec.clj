@@ -25,5 +25,6 @@
   (it "containd the file extention"
     (should= "mkv" (:ext (filepath->metadata @castle-mkv)))
     (should= "nfo" (:ext (filepath->metadata @true-bood-nfo))))
-  (it "returns nil in case data can not be parsed"
-    (should (nil? (filepath->metadata @castle-banner)))))
+  (it "returns empty map in case data can not be parsed"
+    (should= {}
+             (filepath->metadata @castle-banner))))

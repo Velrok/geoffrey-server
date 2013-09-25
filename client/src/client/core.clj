@@ -18,4 +18,5 @@
        :title    (clojure.string/trim (groups 6))
        :season#  (Integer/parseInt (groups 3))
        :episode# (Integer/parseInt (groups 4))
-       :ext      (groups 10)})))
+       :ext      (groups 10)}
+      {})))
