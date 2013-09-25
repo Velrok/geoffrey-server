@@ -6,12 +6,12 @@ character that appears on screen in the pilot episode The Fresh Prince Project.
 
 (purpose description)
 
-# project maturity
+## project maturity
 
-# dependencies
+## dependencies
 
-# setup
+## setup
 
-# running tests
+## running tests
 
-# contribute
+## contribute
