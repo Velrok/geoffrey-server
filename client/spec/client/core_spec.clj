@@ -28,3 +28,35 @@
   (it "returns empty map in case data can not be parsed"
     (should= {}
              (filepath->metadata @castle-banner))))
+
+(describe "list-media-files"
+  (with shows-dir "./fixtures/fs/shows")
+  (with castle-files (filter (fn [{n :showname}]
+                               (= n "Castle (2009)"))
+                             (list-media-files @shows-dir)))
+
+  (with true-blood-files (filter (fn [{n :showname}]
+                                   (= n "True Blood"))
+                                 (list-media-files @shows-dir)))
+
+  (with true-blood-mkvs (filter (fn [{e :ext}]
+                                   (= e "mkv"))
+                                @true-blood-files))
+
+  (with true-blood-nfos (filter (fn [{e :ext}]
+                                   (= e "nfo"))
+                                @true-blood-files))
+
+  (it "finds the Castle mkv file"
+    (should= 1 (count @castle-files))
+    (should= "After The Storm"
+             (:title (first @castle-files))))
+  (it "finds all True Blood mkv files"
+    (should= 4 (count @true-blood-mkvs)))
+
+  (it "finds all True Blood nfo files"
+    (should= 4 (count @true-blood-nfos))))
+
+
+
+
