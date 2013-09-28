@@ -2,7 +2,11 @@
   (:require [clojure.string :as string]
             [digest :as digest]
             [clojure.java.io :as io]
-            [me.raynes.fs :as fs]))
+            [clojure.data.json :as json]
+            [clojure.core.async :refer :all]
+            [me.raynes.fs :as fs]
+            [clj-http.client :as http]
+            [environ.core :refer [env]]))
 
 (defn filepath->metadata [filepath]
   {:pre [[string? filepath]]}
@@ -45,3 +49,62 @@
        (map filepath->metadata)
        (filter #(not (empty? %)))))
 
+(def running (atom true))
+
+(defn stop-all-threads []
+  (reset! running false))
+
+(defn watch-shows-folder! [folder out-chan ms-delay]
+  (go
+    (while @running
+      (>! out-chan
+          (list-media-files folder))
+      (<! (timeout ms-delay)))))
+
+
+(defn on-change-trigger [in out]
+  (let [last-value (atom nil)]
+    (go
+      (while @running
+        (let [current-value (<! in)]
+          (if (not (= @last-value
+                      current-value))
+            (do
+              (>! out current-value)
+              (reset! last-value current-value))))))))
+
+(defn print-chanel [c]
+  (go
+    (while @running
+      (println (<! c)))))
+
+(defn upload-show-data [geoffrey-server-address geoffrey-client-name shows-data]
+  (let [url (str geoffrey-server-address "/"
+                 geoffrey-client-name
+                 "/shows")
+        json-data (json/write-str shows-data)]
+    (println "uploading to " url)
+    (println "data" json-data)
+    (try
+      (http/put url
+                {:content-type :json
+                  :form-params json-data})
+      (catch java.net.ConnectException e
+        (println "ERROR: upload failed: " (.getMessage e))))))
+
+(defn run []
+  (let [geoffrey-server-address (env :geoffrey-server "http://localhost:6000")
+        geoffrey-client-name    (env :geoffrey-client-name
+                                     (.getHostName
+                                       (java.net.InetAddress/getLocalHost)))
+        shows-dir               (env :geoffrey-shows-dir "./fixtures/fs/shows/")
+        shows-data              (chan)
+        shows-data-changes      (chan)]
+    (reset! running true)
+    (watch-shows-folder! shows-dir shows-data 3000)
+    (on-change-trigger shows-data shows-data-changes)
+    (go
+      (while @running
+        (upload-show-data geoffrey-server-address
+                          geoffrey-client-name
+                          (<! shows-data))))))
