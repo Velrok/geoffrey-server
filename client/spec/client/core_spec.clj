@@ -6,6 +6,7 @@
   (with castle-mkv "Castle (2009)/Castle (2009) - 5x01 - After The Storm.mkv")
   (with castle-banner "Castle (2009)/banner.jpg")
   (with true-bood-nfo "/True Blood/Season 06/True Blood - S06E05 - Let's Boot and Rally - HD TV.nfo")
+  (with existing-file "./fixtures/fs/shows/True Blood/Season 05/True Blood - 5x04 - We'll Meet Again - HD TV.mkv")
 
   (it "finds the season number"
     (should= 5 (:season# (filepath->metadata @castle-mkv)))
@@ -27,7 +28,13 @@
     (should= "nfo" (:ext (filepath->metadata @true-bood-nfo))))
   (it "returns empty map in case data can not be parsed"
     (should= {}
-             (filepath->metadata @castle-banner))))
+             (filepath->metadata @castle-banner)))
+  (it "contains the md5 hash of the file contents"
+    (should-not= nil
+                 (:md5 (filepath->metadata @existing-file))))
+  (it "contains nil for md5 in case the file is missing"
+    (should= nil
+             (:md5 (filepath->metadata @castle-mkv)))))
 
 (describe "list-media-files"
   (with shows-dir "./fixtures/fs/shows")
