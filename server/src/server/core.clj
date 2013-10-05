@@ -19,7 +19,23 @@
          data)
   @data-base)
 
+(defn select-episodes
+  [shows showname season episode]
+  (->> shows
+       vals
+       flatten
+       (filter #(= showname
+                   (% "showname")))
+       (filter #(= season
+                   (% "season#")))
+       (filter #(= episode
+                   (% "episode#")))))
 
+(defn contains-episode?
+  [shows showname season episode]
+  (->> (select-episodes shows showname season episode)
+       empty?
+       not))
 
 (defn overview [shows]
   (html5 [:h1 "hello world"]
@@ -29,6 +45,10 @@
 (defroutes main-routes
   (GET "/" []
        (overview @shows))
+  (GET "/share/:showname/:season/:episode"
+       [showname season episode]
+       (pprint [showname season episode])
+       {:status 200})
   (PUT "/:client/shows" [client :as r]
        (update-shows! shows
                       client
