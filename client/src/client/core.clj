@@ -6,7 +6,8 @@
             [clojure.core.async :refer :all]
             [me.raynes.fs :as fs]
             [clj-http.client :as http]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]])
+  (:gen-class))
 
 (defn filepath->metadata [filepath]
   {:pre [[string? filepath]]}
@@ -90,10 +91,14 @@
                 {:content-type :json
                   :form-params json-data})
       (catch java.net.ConnectException e
+        (println "ERROR: upload failed: " (.getMessage e)))
+      (catch org.apache.http.NoHttpResponseException e
+        (println "ERROR: upload failed: " (.getMessage e)))
+      (catch clojure.lang.ExceptionInfo e
         (println "ERROR: upload failed: " (.getMessage e))))))
 
-(defn run []
-  (let [geoffrey-server-address (env :geoffrey-server "http://localhost:6000")
+(defn -main [& args]
+  (let [geoffrey-server-address (env :geoffrey-server "http://localhost:3000")
         geoffrey-client-name    (env :geoffrey-client-name
                                      (.getHostName
                                        (java.net.InetAddress/getLocalHost)))
@@ -103,8 +108,7 @@
     (reset! running true)
     (watch-shows-folder! shows-dir shows-data 3000)
     (on-change-trigger shows-data shows-data-changes)
-    (go
-      (while @running
-        (upload-show-data geoffrey-server-address
-                          geoffrey-client-name
-                          (<! shows-data))))))
+    (while @running
+      (upload-show-data geoffrey-server-address
+                        geoffrey-client-name
+                        (<!! shows-data)))))
