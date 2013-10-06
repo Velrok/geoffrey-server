@@ -57,11 +57,11 @@
 
 
 (describe "broadcast!"
-  (with ib (atom {"tom"   []
-                  "jerry" []}))
+  (with ib (atom {"tom"   #{}
+                  "jerry" #{}}))
   (with msg (->Message :greet "hello"))
   (before (broadcast! @ib @msg))
   (it "appends a message to all clients"
-    (should= {"tom"   [@msg]
-              "jerry" [@msg]}
+    (should= {"tom"   #{@msg}
+              "jerry" #{@msg}}
              @@ib)))

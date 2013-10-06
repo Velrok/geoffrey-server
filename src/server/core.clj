@@ -5,6 +5,7 @@
             [hiccup.element :refer [unordered-list]]
             [clojure.pprint :refer [pprint]]
             [clojure.data.json :as json]
+            [clojure.set :refer [difference]]
             [ring.middleware.json :refer :all]
             [compojure.core :refer :all]
             [server.views :as views]))
@@ -41,9 +42,8 @@
 
 
 (defn create-inbox [client]
-  (if (not (contains? @inboxes client))
-    (swap! inboxes #(assoc % client []))))
-
+  (when-not (contains? @inboxes client)
+    (swap! inboxes #(assoc % client #{}))))
 
 (defn overview [shows]
   (html5 [:h1 "hello world"]
@@ -78,8 +78,7 @@
   (GET "/" []
        (overview @shows))
   (GET "/debug/inboxes" []
-       (pprint @inboxes)
-       (html5 @inboxes))
+       (json/write-str @inboxes))
   (GET "/share/:showname/:season/:episode"
        [showname season episode]
        (let [s (Integer/parseInt season)
@@ -102,7 +101,16 @@
                            json/read-str))
        (create-inbox client)
        {:status 200})
+  (GET "/:client/messages" [client]
+       (let [messages (@inboxes client)]
+         (swap! inboxes
+                (fn [m]
+                  (update-in m [client]
+                             (fn [s]
+                               (difference s messages)))))
+         (json/write-str messages)))
   (route/not-found "<h1>Page not found</h1>"))
+
 
 (def app
   (-> main-routes
