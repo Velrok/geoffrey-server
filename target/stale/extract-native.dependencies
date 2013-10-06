@@ -1,1 +1,0 @@
-([:dependencies ([ring-server "0.2.3"] [org.clojure/clojure "1.5.1"] [hiccup/hiccup "1.0.4"] [compojure/compojure "1.1.5"] [ring/ring-json "0.2.0"] [org.clojure/data.json "0.2.3"] [speclj/speclj "2.7.4"] [org.clojure/tools.nrepl "0.2.3" :exclusions ([org.clojure/clojure])] [clojure-complete/clojure-complete "0.2.3" :exclusions ([org.clojure/clojure])])])
