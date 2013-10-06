@@ -54,3 +54,14 @@
   (it "returns an empty seq in case nothing matches"
     (should= ()
              (select-episodes @test-shows "rainbows" 1 2))))
+
+
+(describe "broadcast!"
+  (with ib (atom {"tom"   []
+                  "jerry" []}))
+  (with msg (->Message :greet "hello"))
+  (before (broadcast! @ib @msg))
+  (it "appends a message to all clients"
+    (should= {"tom"   [@msg]
+              "jerry" [@msg]}
+             @@ib)))
