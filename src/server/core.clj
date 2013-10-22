@@ -1,106 +1,55 @@
 (ns server.core
   (:require [compojure.handler :as handler]
-            [compojure.route :as route]
-            [hiccup.page :refer [html5]]
-            [hiccup.element :refer [unordered-list]]
-            [clojure.pprint :refer [pprint]]
+            [compojure.route   :as route]
+            [server.views      :as views]
             [clojure.data.json :as json]
-            [clojure.set :refer [difference]]
+            [server.messaging  :as msging]
+            [clojure.set          :refer [difference]]
             [ring.middleware.json :refer :all]
-            [compojure.core :refer :all]
-            [server.views :as views]))
+            [compojure.core       :refer :all]))
 
-(def shows (atom {}))
 
+(def files (atom {}))
 (def inboxes (atom {}))
 
-(defn update-shows!
-  [data-base client data]
-  (swap! data-base
-         assoc
-         client
-         data)
-  @data-base)
+(defn reset-clients-files! [files-atom client new-files]
+  (swap! files-atom
+         (fn [d]
+           (assoc d client new-files))))
 
-(defn select-episodes
-  [shows showname season episode]
-  (->> shows
-       vals
-       flatten
-       (filter #(= showname
-                   (% "showname")))
-       (filter #(= season
-                   (% "season#")))
-       (filter #(= episode
-                   (% "episode#")))))
-
-(defn contains-episode?
-  [shows showname season episode]
-  (->> (select-episodes shows showname season episode)
-       empty?
-       not))
-
-
-(defn create-inbox [client]
-  (when-not (contains? @inboxes client)
-    (swap! inboxes #(assoc % client #{}))))
-
-(defn overview [shows]
-  (html5 [:h1 "hello world"]
-         (unordered-list (views/render-shows shows
-                                             views/render-show))))
-(defrecord Message [type content])
-
-(defn broadcast! [inbox message]
-  (println "boradcasting message" message)
-  (doseq [client (keys @inbox)]
-    (pprint client)
-    (swap! inbox
-           (fn [m]
-             (update-in m [client] #(conj % message))))))
-
-(defn share [showname season episode]
-  (if (contains-episode? @shows
-                         showname
-                         season
-                         episode)
-    (do
-      (let [found (first (select-episodes @shows
-                                   showname
-                                   season
-                                   episode))]
-        (broadcast! inboxes (->Message :share
-                                       found))
-        true))
-    false))
+(defn validate-files
+  "Returns true if valid and an error message if false."
+  [files-data]
+  (cond
+    (not (vector? files-data)) "Content must be a JSON vector."
+    (not (every? map? files-data)) "JSON vector must contain objects of md5-hash -> filename pairs."
+    :else true))
 
 (defroutes main-routes
   (GET "/" []
-       (overview @shows))
+       (views/files-overview @files))
+
   (GET "/debug/inboxes" []
        (json/write-str @inboxes))
-  (GET "/share/:showname/:season/:episode"
-       [showname season episode]
-       (let [s (Integer/parseInt season)
-             e (Integer/parseInt episode)]
-        (if (share showname s e)
-          (format "Successfully shared %s S%02dE%02d"
-                  showname
-                  s
-                  e)
-          {:status 404
-            :body (format "Can't find anyone who has %s S%02dE%02d"
-                      showname
-                      s
-                      e)})))
-  (PUT "/:client/shows" [client :as r]
-       (update-shows! shows
-                      client
-                      (->> r
-                           :body
-                           json/read-str))
-       (create-inbox client)
-       {:status 200})
+
+  (GET "/share/:md5"
+       [md5]
+       (msging/broadcast! @inboxes
+                          (msging/->Message :share md5))
+       {:status 501})
+
+  (PUT "/:client/files" [client :as r]
+       (msging/create-inbox client)
+       (let [send-data (->> r
+                            :body
+                            json/read-str)
+             validation-result (validate-files send-data)]
+         (if (= true validation-result)
+           (do
+             (reset-clients-files! files client send-data)
+             {:status 200 :body "ok"})
+           {:status 400 :body validation-result})))
+
   (GET "/:client/messages" [client]
        (let [messages (@inboxes client)]
          (swap! inboxes
@@ -109,6 +58,7 @@
                              (fn [s]
                                (difference s messages)))))
          (json/write-str messages)))
+
   (route/not-found "<h1>Page not found</h1>"))
 
 

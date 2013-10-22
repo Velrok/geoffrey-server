@@ -1,38 +1,27 @@
 (ns server.views
   (:require [clojure.string :as string]
-            [hiccup.element :refer [link-to]]
-            [hiccup.util :refer [url url-encode]]
-            [clojure.pprint :refer [pprint]]))
+            [hiccup.page :refer [html5]]
+            [hiccup.element :refer [unordered-list link-to]]))
 
-(defn share-show-url
-  [show]
-  (format "/share/%s/%d/%d"
-          (string/replace (show "showname")
-                          #" "
-                          "%20")
-          (show "season#")
-          (show "episode#")))
 
-(defn show->str [show]
-  (format "%s S%02dE%02d - %s"
-          (show "showname")
-          (show "season#")
-          (show "episode#")
-          (show "title")))
+(defn share-link [md5 caption]
+  (link-to (str "/share/" md5)
+           caption))
 
-(defn render-show
-  "Converts a map containing show information into a string."
-  [show]
-  (let [showname (show "showname")
-        season   (show "season#")
-        episode  (show "episode#")
-        link-name (show->str show)]
-    (link-to (share-show-url show)
-             link-name)))
+(defn render-file-sharable [file]
+  (share-link (key file)
+              (val file)))
 
-(defn render-shows [shows show-renderer]
-  (->> (vals shows)
-       flatten
-       (map show-renderer)
-       set
-       vec))
+(defn render-files [files file-render-fn]
+  (for [file files]
+    (file-render-fn file)))
+
+
+(defn files-overview [files]
+  (html5 [:h1 "All Files"]
+         (unordered-list (render-files files
+                                       render-file-sharable))))
+
+
+(if (= true "hello")
+  true)

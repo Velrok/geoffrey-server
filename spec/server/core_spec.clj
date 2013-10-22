@@ -2,66 +2,27 @@
   (:require [server.core :refer :all]
             [speclj.core :refer :all]))
 
-(describe "update-shows!"
-  (with db (atom {}))
-  (it "update shows for a client in the shows atom (assumed to contain a map, indexed by client)"
-    (should= {"client1" :test-data}
-             (update-shows! @db "client1"
-                            :test-data))))
-
-(describe "contains-episode?"
-  (with test-shows {"timmy" [{"showname" "True Blood"
-                              "title"    "Kill em all!"
-                              "season#"  5
-                              "episode#" 2}
-                             {"showname" "True Blood"
-                              "title"    "Ferys suck"
-                              "season#"  5
-                              "episode#" 3}]
-                    "jonny" [{"showname" "True Blood"
-                              "title"    "Kill em all!"
-                              "season#"  5
-                              "episode#" 2}]})
-  (it "returns true if at least one client has the requested episode"
-    (should (contains-episode?
-              @test-shows "True Blood" 05 02))
-    (should (contains-episode?
-              @test-shows "True Blood" 5 3)))
-  (it "returns fase if none of the clients has the requested episode"
-    (should-not (contains-episode? @test-shows "hello kitty" 1 2))
-    (should-not (contains-episode? @test-shows "True Blood" 5 4))
-    (should-not (contains-episode? @test-shows "True Blood" 4 2))))
-
-(describe "select-episodes"
-  (with test-shows {"timmy" [{"showname" "True Blood"
-                              "title"    "Kill em all!"
-                              "season#"  5
-                              "episode#" 2}
-                             {"showname" "True Blood"
-                              "title"    "Ferys suck"
-                              "season#"  5
-                              "episode#" 3}]
-                    "jonny" [{"showname" "True Blood"
-                              "title"    ""
-                              "season#"  5
-                              "episode#" 2}]})
-  (it "returns all the matching episodes"
-    (should= [{"season#" 5, "episode#" 3, "showname" "True Blood", "title" "Ferys suck"}]
-             (select-episodes @test-shows "True Blood" 5 3))
-    (should= [{"season#" 5, "episode#" 2, "showname" "True Blood", "title" "Kill em all!"}
-              {"season#" 5, "episode#" 2, "showname" "True Blood", "title" ""}]
-             (select-episodes @test-shows "True Blood" 5 2)))
-  (it "returns an empty seq in case nothing matches"
-    (should= ()
-             (select-episodes @test-shows "rainbows" 1 2))))
+(describe "validate-files"
+  (it "returns true if the files data is valid"
+    (should (validate-files [{"md5-hash1" "filename1"}
+                             {"md5-hash2" "filename2"}])))
+  (it "returns an error string stating that a list is required if not given."
+    (should (re-matches #".*must.*vector.*"
+                        (validate-files {:hello :filename}))))
+  (it "returns an error string stating that the list must contain objects if not given."
+    (should (re-matches #".*must.*contain.*object.*"
+                        (validate-files ["hello" "asdf"])))))
 
 
-(describe "broadcast!"
-  (with ib (atom {"tom"   #{}
-                  "jerry" #{}}))
-  (with msg (->Message :greet "hello"))
-  (before (broadcast! @ib @msg))
-  (it "appends a message to all clients"
-    (should= {"tom"   #{@msg}
-              "jerry" #{@msg}}
-             @@ib)))
+(describe "reset-clients-files!"
+  (with test-files (atom {:c1 [{:hash :filename
+                                :hash2 :filename2}]
+                          :c2 [{:md5 :filename-md5}]}))
+  (before (reset-clients-files! @test-files :c1 []))
+
+  (it "resets the given client files"
+    (should= []
+             (:c1 @@test-files)))
+  (it "keeps the other clients untouched"
+    (should= [{:md5 :filename-md5}]
+             (:c2 @@test-files))))
