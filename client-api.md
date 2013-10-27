@@ -16,15 +16,15 @@ The client has to send the **complete list of all available files**.
 The list must be send as a JSON list of objects where each key is the md5-hash
 of the file and the value is the filename.
 
-Successfull requests will be answert with a http 200: OK.
-Mal formed requests will be answert with a http 400, with the validation error
+Successfull requests will be answered with a HTTP 200: OK.
+Malformed requests will be answered with a HTTP 400, with the validation error
 as the body in plain text.
 
 **url**: `/:client/files`  
 **body as JSON**: `[{"md5-hash": "filename"}, {...}]`  
 responds:   
   200 (ok)  
-  400 (the validateion error message)  
+  400 (the validation error message)
 
 
 ## GET /:client/messages
@@ -35,9 +35,9 @@ type as the key and the playload (in JSON format) as the value.
 
 All event types and their payload are explained in the next section.
 
-**url**: `/:client/messages`  
-**responds**:  
-  200: JSON `[{"type": "json-payload"}, {...}]`  
+**url**: `/:client/messages`
+**responds**:
+  200: JSON `[{"type": "json-payload"}, {...}]`
 
 ### message types
 
