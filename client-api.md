@@ -1,51 +1,41 @@
-# API Requests
+# Geoffrey client HTTP API
 
-This lists all the vailable resources that build the API.
-Parts of the URL that start with : mark variables or placeholders.
+Clients need to implement the complete API in order to integrate with the 
+geoffrey-server.
+The API is written in [apiblueprint](http://apiblueprint.org/) format.
 
-The `:client` is to be replaces by the client with its name, which might be
-choosen at will.
-The client name should be changeable by the user or extracted from the hostname,
-since the API does not detect nor handle client name clashes.
-
-
-## PUT /:client/files  
-
-Update the file status.
-The client has to send the **complete list of all available files**.
-The list must be send as a JSON list of objects where each key is the md5-hash
-of the file and the value is the filename.
-
-Successfull requests will be answered with a HTTP 200: OK.
-Malformed requests will be answered with a HTTP 400, with the validation error
-as the body in plain text.
-
-**url**: `/:client/files`  
-**body as JSON**: `[{"md5-hash": "filename"}, {...}]`  
-responds:   
-  200 (ok)  
-  400 (the validation error message)
+# Files [/{client}/files]
+The interval is up to the client.
+The client name should be configurable by the user and must initially be derived
+the the hostname as an attempt to minimize the name clash probability.
 
 
-## GET /:client/messages
+## Replace the old file list [PUT]
+This resource is write only and intended as the endpoint for the client to inform
+the server about the current file collection.
+Writes to this endpoint will replace the old files list, hence all data need to
+be send.
 
-The client has to poll for new messages.
-Messages are delivered as a JSON list of objects where each object has the event
-type as the key and the playload (in JSON format) as the value.
++ Response 200 (text/plain)
 
-All event types and their payload are explained in the next section.
+  ok
 
-**url**: `/:client/messages`
-**responds**:
-  200: JSON `[{"type": "json-payload"}, {...}]`
++ Response 400 (application/json)
 
-### message types
+  [{"8bsqd8pasdufh3": "banner.jpg"}, 
+   {"h9has77fasdhfo": "index.html"},
+   {...}]
 
-This section list all message types receivable via
-`GET /:client/messages`.
 
-#### share
-Contains only the md5 hash of the file that should be shared.
 
-example:
-`{"share" "7jasrr97hasd7"}`
+# Messages
+Messages triggered by various system or user events.
+For example sharing events.
+
+## Receive all messages [GET]
+A call to this resouce drains all messages.
+
++ Response 200 (application/json)
+
+  [{"share": "iausdzfhase9"},
+   {"share": "oasdhfasduwer7"}]
