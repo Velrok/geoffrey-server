@@ -28,7 +28,7 @@ be send.
 
 
 
-# Messages
+# Messages [/{client}/messages]
 Messages triggered by various system or user events.
 For example sharing events.
 
