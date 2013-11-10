@@ -16,16 +16,16 @@ the server about the current file collection.
 Writes to this endpoint will replace the old files list, hence all data need to
 be send.
 
++ Request (application/json)
+
+  [{"filename": "banner.jpg",
+    "md5hash": "087asdhf97"}, 
+   {...}]
+
+
 + Response 200 (text/plain)
 
   ok
-
-+ Response 400 (application/json)
-
-  [{"8bsqd8pasdufh3": "banner.jpg"}, 
-   {"h9has77fasdhfo": "index.html"},
-   {...}]
-
 
 
 # Messages [/{client}/messages]
@@ -37,5 +37,6 @@ A call to this resouce drains all messages.
 
 + Response 200 (application/json)
 
-  [{"share": "iausdzfhase9"},
-   {"share": "oasdhfasduwer7"}]
+  [{"filename": "iausdzfhase9",
+    "md5hash": "98aszdfhasd"},
+   {...}]
