@@ -8,11 +8,11 @@
                  ;[environ "0.4.0"]
                  ;[clj-http "0.7.7"]
                  [hiccup "1.0.4"]
-                 [compojure "1.1.5"]
+                 [compojure "1.1.6"]
                  [ring/ring-json "0.2.0"]
                  [org.clojure/data.json "0.2.3"]
                  ;[org.clojure/core.async "0.1.222.0-83d0c2-alpha"]
-                 [speclj "2.7.4"]]
+                 [speclj "2.8.0"]]
   :plugins [[speclj "2.5.0"]
             [lein-ring "0.7.1"]]
   :main server.core
